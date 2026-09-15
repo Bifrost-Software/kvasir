@@ -1,0 +1,51 @@
+# Regression tests for kvasir's MCP tool surface, run with:
+#   npx promptfoo@latest eval -c evals/promptfoo/promptfooconfig.yaml
+#
+# Requires a running kvasir instance (packaged add-on or `python3 server.py`
+# per ../../DEVELOPMENT.md) reachable at KVASIR_MCP_URL, plus its api_key as
+# KVASIR_API_KEY. Never commit real values for either — set them in your
+# shell or a local .env that's already gitignored.
+#
+# Safety: these tests are read-only / validation-only on purpose. They do
+# NOT call install_update or skip_update with a real update.* entity_id,
+# because that would actually install or skip an update on whatever real
+# Home Assistant instance KVASIR_MCP_URL points at. If you want to exercise
+# the success paths, do it manually against a disposable test HA instance —
+# don't add a case here that mutates a real system on every `promptfoo eval`.
+
+description: kvasir MCP tool-calling regression tests
+
+providers:
+  - id: mcp
+    config:
+      server:
+        url: '{{ env.KVASIR_MCP_URL }}' # e.g. http://localhost:8321/sse
+        headers:
+          Authorization: 'Bearer {{ env.KVASIR_API_KEY }}'
+      timeout: 15000
+
+prompts:
+  - '{{ tool_call }}'
+
+tests:
+  - description: list_pending_updates returns a JSON array (read-only)
+    vars:
+      tool_call: '{"tool": "list_pending_updates", "args": {}}'
+    assert:
+      - type: is-json
+      - type: javascript
+        value: Array.isArray(JSON.parse(output))
+
+  - description: install_update rejects a non-update entity before touching HA
+    vars:
+      tool_call: '{"tool": "install_update", "args": {"entity_id": "sensor.not_an_update"}}'
+    assert:
+      - type: contains
+        value: 'must be an update'
+
+  - description: skip_update rejects a non-update entity before touching HA
+    vars:
+      tool_call: '{"tool": "skip_update", "args": {"entity_id": "sensor.not_an_update"}}'
+    assert:
+      - type: contains
+        value: 'must be an update'

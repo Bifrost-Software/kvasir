@@ -57,6 +57,13 @@ docker run --rm -p 8321:8321 \
    Option A).
 3. In HA: **Settings → Add-ons → Kvasir → Rebuild**, then **Restart**.
 
+## Regression-testing the MCP tools
+
+See [`evals/promptfoo/README.md`](evals/promptfoo/README.md) — runs
+[promptfoo](https://www.promptfoo.dev/) against a live kvasir instance to
+catch tool-calling regressions (bad JSON, broken validation, etc.) without
+touching a real Home Assistant entity.
+
 ## Useful references
 
 - Home Assistant add-on development docs: developers.home-assistant.io
