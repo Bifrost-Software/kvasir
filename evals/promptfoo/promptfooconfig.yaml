@@ -18,8 +18,10 @@ description: kvasir MCP tool-calling regression tests
 providers:
   - id: mcp
     config:
+      enabled: true
       server:
         url: '{{ env.KVASIR_MCP_URL }}' # e.g. http://localhost:8321/sse
+        name: kvasir
         headers:
           Authorization: 'Bearer {{ env.KVASIR_API_KEY }}'
       timeout: 15000
@@ -35,6 +37,10 @@ tests:
       - type: is-json
       - type: javascript
         value: Array.isArray(JSON.parse(output))
+      - type: not-contains
+        value: 'Error executing tool' # MCP wraps errors in the same array-of-content
+        # shape as success, so the checks above pass either way — this is what
+        # actually catches a failed call (bad token, HA unreachable, etc.)
 
   - description: install_update rejects a non-update entity before touching HA
     vars:
